@@ -1,0 +1,33 @@
+# Minimal LilithOS Makefile for WSL
+# Build working kernel without complex dependencies
+
+CC = gcc
+LD = ld
+ASM = nasm
+
+CFLAGS = -ffreestanding -fno-stack-protector -m32 -c
+LDFLAGS = -m elf_i386 -nostdlib -static
+ASMFLAGS = -f elf32
+
+SRC_DIR = src
+BUILD_DIR = build
+
+.PHONY: all clean run
+
+all: $(BUILD_DIR)/kernel.bin
+
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kmain.o $(BUILD_DIR)/boot.o
+	@mkdir -p $(BUILD_DIR)
+	$(LD) $(LDFLAGS) -Ttext 0x100000 -o $@ $^
+
+$(BUILD_DIR)/kmain.o: $(SRC_DIR)/kernel/kmain_simple.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+$(BUILD_DIR)/boot.o: $(SRC_DIR)/kernel/boot/boot.asm
+	$(ASM) $(ASMFLAGS) -o $@ $<
+
+run: $(BUILD_DIR)/kernel.bin
+	qemu-system-x86_64 -kernel $< -m 256M
+
+clean:
+	rm -rf $(BUILD_DIR)

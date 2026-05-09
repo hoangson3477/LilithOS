@@ -1,0 +1,27 @@
+CC = i686-linux-gnu-gcc
+LD = i686-linux-gnu-ld
+ASM = nasm
+
+CFLAGS = -ffreestanding -fno-stack-protector -m32 -c
+LDFLAGS = -m elf_i386 -nostdlib -static
+ASMFLAGS = -f elf32
+
+all: build/lilithos.iso
+
+build/lilithos.iso: build/kernel.bin
+	@mkdir -p build/iso/boot/grub
+	cp build/kernel.bin build/iso/boot/
+	echo "set timeout=0" > build/iso/boot/grub/grub.cfg
+	echo "set default=0" >> build/iso/boot/grub/grub.cfg
+	echo "" >> build/iso/boot/grub/grub.cfg
+	echo "menuentry \"LilithOS - Windows 11 Style OS\" {" >> build/iso/boot/grub/grub.cfg
+	echo "    multiboot2 /boot/kernel.bin" >> build/iso/boot/grub/grub.cfg
+	echo "    boot" >> build/iso/boot/grub/grub.cfg
+	echo "}" >> build/iso/boot/grub/grub.cfg
+	grub-mkrescue -o build/lilithos.iso build/iso
+
+run: build/lilithos.iso
+	qemu-system-x86_64 -cdrom build/lilithos.iso -m 256M
+
+clean:
+	rm -rf build

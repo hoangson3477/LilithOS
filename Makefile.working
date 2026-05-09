@@ -1,0 +1,19 @@
+CC = i686-linux-gnu-gcc
+LD = i686-linux-gnu-ld
+ASM = nasm
+
+CFLAGS = -ffreestanding -fno-stack-protector -m32 -c
+LDFLAGS = -m elf_i386 -nostdlib -static
+ASMFLAGS = -f elf32
+
+all: build/kernel.bin
+	@mkdir -p build
+	$(CC) $(CFLAGS) -o build/kmain.o src/kernel/kmain_multiboot.c
+	$(ASM) $(ASMFLAGS) -o build/boot.o src/kernel/boot/multiboot.asm
+	$(LD) $(LDFLAGS) -Ttext 0x100000 -o build/kernel.bin build/boot.o build/kmain.o
+
+run: build/kernel.bin
+	qemu-system-x86_64 -kernel build/kernel.bin -m 256M
+
+clean:
+	rm -rf build
